@@ -1,0 +1,80 @@
+
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+
+	"Description": "Creates a VPC with the CIDR: 10.0.1.0/24 and two Subnets that share the CIDR space equally among the them. Makes one Subnet as Public Subnet",
+
+
+     "Resources" : {
+       "InternetGateway": {
+       			"Type": "AWS::EC2::InternetGateway",
+       			"Properties": {}
+       		},
+
+          "VPCGatewayAttachment" : {
+   "Type" : "AWS::EC2::VPCGatewayAttachment",
+   "Properties" : {
+      "VpcId" : { "Ref" : "rohitVPC" },
+      "InternetGatewayId" : { "Ref" : "InternetGateway" }
+   }
+},
+
+
+        "rohitVPC" : {
+           "Type" : "AWS::EC2::VPC",
+           "Properties" : {
+              "CidrBlock" : "10.0.1.0/24",
+      	      "Tags" : [ {"Key" : "foo", "Value" : "bar"} ]
+           }
+        } ,
+
+
+      "PublicSubnet" : {
+         "Type" : "AWS::EC2::Subnet",
+         "Properties" : {
+            "VpcId" : { "Ref" : "rohitVPC" },
+            "CidrBlock" : "10.0.0.0/25",
+            "MapPublicIpOnLaunch": "true"
+         }
+
+   },
+
+   "PrivateSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+         "VpcId" : { "Ref" : "rohitVPC" },
+         "CidrBlock" : "10.0.0.128/25",
+         "MapPublicIpOnLaunch": "false"
+      }
+   },
+
+   "PublicRouteTable" : {
+          "Type" : "AWS::EC2::RouteTable",
+          "Properties" : {
+             "VpcId" : { "Ref" : "rohitVPC" },
+                       }
+       },
+
+       "PublicRoute" : {
+                "Type" : "AWS::EC2::Route",
+                "DependsOn" : "VPCGatewayAttachment",
+                "Properties" : {
+                   "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                   "DestinationCidrBlock" : "0.0.0.0/0",
+                   "GatewayId" : { "Ref" : "InternetGateway" }
+                }
+             },
+
+       "SubnetRoutableTableAssociation": {
+             		"Type": "AWS::EC2::SubnetRouteTableAssociation",
+             		"Properties": {
+             			"RouteTableId": {
+             				"Ref": "PublicRouteTable"
+             				},
+             				"SubnetId": {
+             					"Ref": "PublicSubnet"
+             				}
+             			}
+                }
+              }
+            }
